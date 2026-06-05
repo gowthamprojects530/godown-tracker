@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Godown Consignment Tracker</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:10px}
+.container{max-width:1000px;margin:auto}
+.card{background:#fff;border-radius:10px;padding:12px;margin:10px 0;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+h1{text-align:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+input,button{width:100%;padding:10px;margin-top:5px;box-sizing:border-box}
+button{cursor:pointer}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.stat{padding:10px;border-radius:8px;text-align:center;font-weight:bold}
+.stats .stat:nth-child(1){background:#2e7d32;color:white}
+.stats .stat:nth-child(2){background:#ef6c00;color:white}
+.stats .stat:nth-child(3){background:#1565c0;color:white}
+.stats .stat:nth-child(4){background:#c62828;color:white}
+.stats .stat:nth-child(5){background:#6a1b9a;color:white}
+.stats .stat:nth-child(6){background:#f9a825;color:black}
+.stats .stat:nth-child(2){background:#b6d7a8}
+.stats .stat:nth-child(3){background:#f9cb9c}
+.stats .stat:nth-child(4){background:#9fc5e8}
+.stats .stat:nth-child(5){background:#ea9999}
+.stats .stat:nth-child(6){background:#a4c2f4}
+.stats .stat:nth-child(7){background:#ffd966}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border:1px solid #ddd;padding:6px;text-align:center}
+th{background:#e9ecef;position:sticky;top:0;z-index:2}
+@media(max-width:600px){table{font-size:12px}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Godown Consignment Tracker</h1>
+
+<div class="card">
+<div class="grid">
+<div><label>Date</label><input type="date" id="date"></div>
+<div><label>Consignments In</label><input type="number" id="received"></div>
+<div><label>Dumped</label><input type="number" id="dumped"></div>
+<div><label>Accepted</label><input type="number" id="accepted"></div>
+</div>
+<br>
+<button id="saveBtn" onclick="addEntry()">Add Entry</button>
+</div>
+
+<div class="card">
+<h3>Current Status</h3>
+<div class="stats">
+<div class="stat"><b>Total Received</b><div id="tRec">0</div></div>
+<div class="stat"><b>Total Dumped</b><div id="tDump">0</div></div>
+<div class="stat"><b>Total Accepted</b><div id="tAcc">0</div></div>
+<div class="stat"><b>Pending Dumping</b><div id="pDump">0</div></div>
+<div class="stat"><b>Pending Acceptance</b><div id="pAcc">0</div></div><div class="stat"><b>Total Pendency</b><div id="tPend">0</div></div>
+</div>
+</div>
+
+
+
+<div class="card" style="background:#f8fbff">
+<h3>Today's Acceptance Status</h3>
+<div id="waSummary" style="font-size:16px;line-height:1.8;font-weight:bold;padding:10px">
+Date : -<br>
+OB : 0<br>
+Dumped : 0<br>
+Accepted : 0<br>
+Balance : 0
+</div>
+<button onclick="copyWhatsApp()">📋 Copy WhatsApp Message</button>
+</div>
+
+<div class="card">
+<input type="text" id="search" placeholder="Search date..." onkeyup="render()">
+<br><br>
+<button onclick="exportCSV()">Export CSV</button>
+<button onclick="backupData()">Backup</button>
+<input type="file" id="restoreFile" onchange="restoreData(event)">
+</div>
+
+<div class="card"><h3>Day Wise Report</h3><div style="overflow-x:auto"><table>
+<thead>
+<tr>
+<th style="background:#d9ead3">Date</th>
+<th style="background:#f4cccc">Opening Dump Pend</th>
+<th style="background:#cfe2f3">Opening Acc Pend</th>
+<th style="background:#ffe599">Total Opening Balance</th>
+<th style="background:#b6d7a8">Received</th><th style="background:#ffe599">Total Received</th>
+<th style="background:#f9cb9c">Dumped</th>
+<th style="background:#9fc5e8">Accepted</th>
+<th style="background:#ea9999">Pending Dumping</th>
+<th style="background:#a4c2f4">Pending Acceptance</th>
+<th style="background:#ffd966">Total Pendency</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table></div>
+</div>
+
+<div class="card">
+<h3>Monthly Summary</h3>
+<table>
+<thead>
+<tr>
+<th>Month</th>
+<th>Received</th>
+<th>Dumped</th>
+<th>Accepted</th>
+<th>Closing Pending Dumping</th>
+<th>Closing Pending Acceptance</th>
+<th>Total Pendency</th>
+</tr>
+</thead>
+<tbody id="monthlyBody"></tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+let data = JSON.parse(localStorage.getItem("godownData")||"[]"); let editIndex=-1;
+
+function save(){
+ localStorage.setItem("godownData",JSON.stringify(data));
+}
+
+function recalc(){
+ let pendDump=0, pendAcc=0;
+ data.sort((a,b)=>a.date.localeCompare(b.date));
+ data.forEach(r=>{
+   r.openDump = pendDump;
+   r.openAcc = pendAcc;
+   pendDump = pendDump + Number(r.received) - Number(r.dumped);
+   pendAcc = pendAcc + Number(r.dumped) - Number(r.accepted);
+   r.pendingDump=pendDump;
+   r.pendingAcc=pendAcc;
+ });
+}
+
+function addEntry(){
+ const date=document.getElementById("date").value;
+ const received=+document.getElementById("received").value||0;
+ const dumped=+document.getElementById("dumped").value||0;
+ const accepted=+document.getElementById("accepted").value||0;
+
+ if(!date){alert("Select date");return;}
+ if(editIndex>=0){
+ data[editIndex]={date,received,dumped,accepted};
+ editIndex=-1;
+ document.getElementById("saveBtn").innerText="Add Entry";
+}else{
+ data.push({date,received,dumped,accepted});
+}
+ recalc(); save(); render();
+
+ document.getElementById("received").value="";
+ document.getElementById("dumped").value="";
+ document.getElementById("accepted").value="";
+}
+
+function del(i){
+ if(confirm("Delete entry?")){
+   data.splice(i,1);
+   recalc(); save(); render();
+ }
+}
+
+
+function editEntry(i){
+ let r=data[i];
+ editIndex=i;
+ document.getElementById("date").value=r.date;
+ document.getElementById("received").value=r.received;
+ document.getElementById("dumped").value=r.dumped;
+ document.getElementById("accepted").value=r.accepted;
+ document.getElementById("saveBtn").innerText="Update Entry";
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function render(){
+ recalc();
+ let q=document.getElementById("search").value.toLowerCase();
+ let tb="";
+ let tr=0,td=0,ta=0,pd=0,pa=0,topen=0;
+
+ data.forEach((r,i)=>{
+   topen += Number(r.openDump||0) + Number(r.openAcc||0);
+   tr+=Number(r.received);
+   td+=Number(r.dumped);
+   ta+=Number(r.accepted);
+   pd=r.pendingDump;
+   pa=r.pendingAcc;
+
+   if(!q || r.date.toLowerCase().includes(q)){
+     tb+=`<tr>
+     <td>${(() => { const d=new Date(r.date); return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear(); })()}</td>
+     <td>${r.openDump}</td>
+     <td>${r.openAcc}</td>
+     <td>${(Number(r.openDump||0)+Number(r.openAcc||0))}</td>
+     <td style="background:#eaf7ea"><b>${r.received}</b></td><td>${(Number(r.openDump||0)+Number(r.openAcc||0)+Number(r.received||0))}</td>
+     <td>${r.dumped}</td>
+     <td style="background:#e8f1ff"><b>${r.accepted}</b></td>
+     <td>${r.pendingDump}</td>
+     <td>${r.pendingAcc}</td>
+     <td style="background:#fff4cc"><b>${r.pendingDump + r.pendingAcc}</b></td>
+     <td><button style="background:#4CAF50;color:white;border:none;padding:6px;border-radius:4px" onclick="editEntry(${i})">Edit</button> <button style="background:#d9534f;color:white;border:none;padding:6px;border-radius:4px" onclick="del(${i})">Delete</button></td>
+     </tr>`;
+   }
+ });
+
+ document.getElementById("tbody").innerHTML=tb;
+ document.getElementById("tRec").innerText=tr;
+ document.getElementById("tDump").innerText=td;
+ document.getElementById("tAcc").innerText=ta;
+ document.getElementById("pDump").innerText=pd;
+ document.getElementById("pAcc").innerText=pa;
+ 
+document.getElementById("tPend").innerText=(pd+pa);
+
+let monthly={};
+data.forEach(r=>{
+ let m=r.date.substring(0,7);
+ if(!monthly[m]) monthly[m]={rec:0,dump:0,acc:0,pd:0,pa:0};
+ monthly[m].rec+=Number(r.received);
+ monthly[m].dump+=Number(r.dumped);
+ monthly[m].acc+=Number(r.accepted);
+ monthly[m].pd=r.pendingDump;
+ monthly[m].pa=r.pendingAcc;
+});
+
+let mhtml="";
+Object.keys(monthly).sort().forEach(m=>{
+ let x=monthly[m];
+ mhtml+=`<tr>
+ <td>${m}</td>
+ <td>${x.rec}</td>
+ <td>${x.dump}</td>
+ <td>${x.acc}</td>
+ <td>${x.pd}</td>
+ <td>${x.pa}</td>
+ <td>${x.pd+x.pa}</td>
+ </tr>`;
+});
+
+document.getElementById("monthlyBody").innerHTML=mhtml;
+
+if(data.length>0){
+ let last=data[data.length-1];
+ let d=new Date(last.date);
+ let dt=String(d.getDate()).padStart(2,'0')+"-"+
+ String(d.getMonth()+1).padStart(2,'0')+"-"+
+ d.getFullYear();
+
+ document.getElementById("waSummary").innerHTML =
+ "Date : "+dt+"<br>"+
+ "OB : "+(last.openAcc||0)+"<br>"+
+ "Dumped : "+(last.dumped||0)+"<br>"+
+ "Accepted : "+(last.accepted||0)+"<br>"+
+ "Balance : "+(last.pendingAcc||0);
+}
+
+
+}
+
+
+function copyWhatsApp(){
+ const card=document.getElementById("waSummary");
+ const txt=card.innerText.trim();
+ navigator.clipboard.writeText(txt);
+ alert("WhatsApp message copied!");
+}
+
+function exportCSV(){
+ let csv="Date,Received,Dumped,Accepted,Pending Dumping,Pending Acceptance\n";
+ data.forEach(r=>{
+ csv+=`${r.date},${r.received},${r.dumped},${r.accepted},${r.pendingDump},${r.pendingAcc}\n`;
+ });
+ let blob=new Blob([csv],{type:"text/csv"});
+ let a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="Godown_Report.csv";
+ a.click();
+}
+
+function backupData(){
+ let blob=new Blob([JSON.stringify(data)],{type:"application/json"});
+ let a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="Godown_Backup.json";
+ a.click();
+}
+
+function restoreData(e){
+ let file=e.target.files[0];
+ let reader=new FileReader();
+ reader.onload=function(){
+   data=JSON.parse(reader.result);
+   save(); render();
+ };
+ reader.readAsText(file);
+}
+
+render();
+</script>
+</body>
+</html>

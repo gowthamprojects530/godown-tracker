@@ -1,0 +1,8 @@
+{
+  "name": "Godown Tracker",
+  "short_name": "Godown",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1976d2"
+}
