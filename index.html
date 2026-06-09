@@ -34,6 +34,7 @@ th{background:#e9ecef;position:sticky;top:0;z-index:2}
 input[type="date"]{min-width:100%;}
 @media(max-width:700px){
 .grid{grid-template-columns:1fr 1fr;}
+.grid > div:first-child{grid-column:1 / -1;}
 }
 @media(max-width:480px){
 .grid{grid-template-columns:1fr;}
@@ -164,7 +165,7 @@ function addEntry(){
 }else{
  data.push({date,received,dumped,accepted,rejected});
 }
- recalc(); save(); window.onload=function(){document.getElementById('date').value=new Date().toISOString().split('T')[0];render();};
+ recalc(); save(); window.onload=function(){document.getElementById('date').value=(()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().split('T')[0];})();render();};
 
  document.getElementById("received").value="";
  document.getElementById("dumped").value="";
@@ -175,7 +176,7 @@ function addEntry(){
 function del(i){
  if(confirm("Delete entry?")){
    data.splice(i,1);
-   recalc(); save(); window.onload=function(){document.getElementById('date').value=new Date().toISOString().split('T')[0];render();};
+   recalc(); save(); window.onload=function(){document.getElementById('date').value=(()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().split('T')[0];})();render();};
  }
 }
 
@@ -312,12 +313,12 @@ function restoreData(e){
  let reader=new FileReader();
  reader.onload=function(){
    data=JSON.parse(reader.result);
-   save(); window.onload=function(){document.getElementById('date').value=new Date().toISOString().split('T')[0];render();};
+   save(); window.onload=function(){document.getElementById('date').value=(()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().split('T')[0];})();render();};
  };
  reader.readAsText(file);
 }
 
-window.onload=function(){document.getElementById('date').value=new Date().toISOString().split('T')[0];render();};
+window.onload=function(){document.getElementById('date').value=(()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().split('T')[0];})();render();};
 </script>
 </body>
 </html>
