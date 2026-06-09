@@ -31,8 +31,8 @@ th,td{border:1px solid #ddd;padding:6px;text-align:center}
 th{background:#e9ecef;position:sticky;top:0;z-index:2}
 @media(max-width:600px){table{font-size:12px}}
 
-input[type="date"]{width:180px;max-width:100%;}
-.dateField{max-width:200px;}
+input[type="date"]{width:100%;max-width:100%;}
+.dateField{width:100%;max-width:100%;grid-column:1 / -1;}
 @media(max-width:700px){
 .grid{grid-template-columns:1fr 1fr;}
 .grid > div:first-child{grid-column:1 / -1;}
@@ -91,7 +91,7 @@ Balance : 0
 <input type="file" id="restoreFile" onchange="restoreData(event)">
 </div>
 
-<div class="card"><h3>Day Wise Report</h3><div style="overflow-x:auto"><table>
+<div class="card"><h3>Day Wise Report</h3><button onclick="toggleHistory()">Show All Dates</button><br><br><div style="overflow-x:auto"><table>
 <thead>
 <tr>
 <th style="background:#d9ead3">Date</th>
@@ -132,7 +132,7 @@ Balance : 0
 </div>
 
 <script>
-let data = JSON.parse(localStorage.getItem("godownData")||"[]"); let editIndex=-1;
+let data = JSON.parse(localStorage.getItem("godownData")||"[]"); let editIndex=-1; let showAllDates=false;
 
 function save(){
  localStorage.setItem("godownData",JSON.stringify(data));
@@ -211,6 +211,13 @@ function editEntry(i){
  window.scrollTo({top:0,behavior:'smooth'});
 }
 
+
+function toggleHistory(){
+ showAllDates=!showAllDates;
+ document.querySelector("button[onclick='toggleHistory()']").innerText=showAllDates?"Show Recent Dates":"Show All Dates";
+ render();
+}
+
 function render(){
  recalc();
  let q=document.getElementById("search").value.toLowerCase();
@@ -226,7 +233,12 @@ function render(){
    pd=r.pendingDump;
    pa=r.pendingAcc;
 
-   if(!q || r.date.toLowerCase().includes(q)){
+   
+let visible=true;
+if(!showAllDates && data.length>2){
+   visible = (i >= data.length-2);
+}
+if((!q || r.date.toLowerCase().includes(q)) && visible){
      tb+=`<tr>
      <td>${(() => { const d=new Date(r.date); return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear(); })()}</td>
      <td>${r.openDump}</td>
