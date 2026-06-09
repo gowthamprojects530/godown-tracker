@@ -32,7 +32,8 @@ th{background:#e9ecef;position:sticky;top:0;z-index:2}
 @media(max-width:600px){table{font-size:12px}}
 
 input[type="date"]{width:100%;max-width:100%;}
-.dateField{width:100%;max-width:100%;grid-column:1 / -1;}
+.dateField{width:100%;max-width:100%;grid-column:1 / -1;overflow:hidden;}
+.dateField input{display:block;width:100% !important;max-width:100% !important;min-width:0;border-radius:8px;}
 @media(max-width:700px){
 .grid{grid-template-columns:1fr 1fr;}
 .grid > div:first-child{grid-column:1 / -1;}
