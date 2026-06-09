@@ -31,7 +31,8 @@ th,td{border:1px solid #ddd;padding:6px;text-align:center}
 th{background:#e9ecef;position:sticky;top:0;z-index:2}
 @media(max-width:600px){table{font-size:12px}}
 
-input[type="date"]{min-width:100%;}
+input[type="date"]{width:180px;max-width:100%;}
+.dateField{max-width:200px;}
 @media(max-width:700px){
 .grid{grid-template-columns:1fr 1fr;}
 .grid > div:first-child{grid-column:1 / -1;}
@@ -48,10 +49,10 @@ input[type="date"]{min-width:100%;}
 
 <div class="card">
 <div class="grid">
-<div><label>Date</label><input type="date" id="date"></div>
-<div><label>Consignments In</label><input type="number" id="received"></div>
-<div><label>Dumped</label><input type="number" id="dumped"></div>
-<div><label>Accepted</label><input type="number" id="accepted"></div><div><label>Rejected</label><input type="number" id="rejected"></div>
+<div class="dateField"><label>Date</label><input type="date" id="date"></div>
+<div><label>Consignments In</label><input type="number" id="received" inputmode="numeric" enterkeyhint="next"></div>
+<div><label>Dumped</label><input type="number" id="dumped" inputmode="numeric" enterkeyhint="next"></div>
+<div><label>Accepted</label><input type="number" id="accepted" inputmode="numeric" enterkeyhint="next"></div><div><label>Rejected</label><input type="number" id="rejected" inputmode="numeric" enterkeyhint="done"></div>
 </div>
 <br>
 <button id="saveBtn" onclick="addEntry()">Add Entry</button>
@@ -165,7 +166,24 @@ function addEntry(){
 }else{
  data.push({date,received,dumped,accepted,rejected});
 }
- recalc(); save(); window.onload=function(){document.getElementById('date').value=(()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().split('T')[0];})();render();};
+ recalc(); save(); 
+['received','dumped','accepted','rejected'].forEach((id,idx,arr)=>{
+ const el=document.getElementById(id);
+ if(el){
+  el.addEventListener('keydown',function(e){
+   if(e.key==='Enter'){
+    e.preventDefault();
+    if(idx < arr.length-1){
+      document.getElementById(arr[idx+1]).focus();
+    }else{
+      document.getElementById('saveBtn').focus();
+    }
+   }
+  });
+ }
+});
+
+window.onload=function(){document.getElementById('date').value=(()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().split('T')[0];})();render();};
 
  document.getElementById("received").value="";
  document.getElementById("dumped").value="";
