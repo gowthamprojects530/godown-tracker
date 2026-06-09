@@ -9,7 +9,7 @@ body{font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:10px}
 .container{max-width:1000px;margin:auto}
 .card{background:#fff;border-radius:10px;padding:12px;margin:10px 0;box-shadow:0 2px 6px rgba(0,0,0,.1)}
 h1{text-align:center}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 input,button{width:100%;padding:10px;margin-top:5px;box-sizing:border-box}
 button{cursor:pointer}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
@@ -41,7 +41,7 @@ th{background:#e9ecef;position:sticky;top:0;z-index:2}
 <div><label>Date</label><input type="date" id="date"></div>
 <div><label>Consignments In</label><input type="number" id="received"></div>
 <div><label>Dumped</label><input type="number" id="dumped"></div>
-<div><label>Accepted</label><input type="number" id="accepted"></div>
+<div><label>Accepted</label><input type="number" id="accepted"></div><div><label>Rejected</label><input type="number" id="rejected"></div>
 </div>
 <br>
 <button id="saveBtn" onclick="addEntry()">Add Entry</button>
@@ -52,7 +52,7 @@ th{background:#e9ecef;position:sticky;top:0;z-index:2}
 <div class="stats">
 <div class="stat"><b>Total Received</b><div id="tRec">0</div></div>
 <div class="stat"><b>Total Dumped</b><div id="tDump">0</div></div>
-<div class="stat"><b>Total Accepted</b><div id="tAcc">0</div></div>
+<div class="stat"><b>Total Accepted</b><div id="tAcc">0</div></div><div class="stat"><b>Total Rejected</b><div id="tRej">0</div></div>
 <div class="stat"><b>Pending Dumping</b><div id="pDump">0</div></div>
 <div class="stat"><b>Pending Acceptance</b><div id="pAcc">0</div></div><div class="stat"><b>Total Pendency</b><div id="tPend">0</div></div>
 </div>
@@ -89,7 +89,7 @@ Balance : 0
 <th style="background:#ffe599">Total Opening Balance</th>
 <th style="background:#b6d7a8">Received</th><th style="background:#ffe599">Total Received</th>
 <th style="background:#f9cb9c">Dumped</th>
-<th style="background:#9fc5e8">Accepted</th>
+<th style="background:#9fc5e8">Accepted</th><th style="background:#f4cccc">Rejected</th>
 <th style="background:#ea9999">Pending Dumping</th>
 <th style="background:#a4c2f4">Pending Acceptance</th>
 <th style="background:#ffd966">Total Pendency</th>
@@ -134,7 +134,7 @@ function recalc(){
    r.openDump = pendDump;
    r.openAcc = pendAcc;
    pendDump = pendDump + Number(r.received) - Number(r.dumped);
-   pendAcc = pendAcc + Number(r.dumped) - Number(r.accepted);
+   pendAcc = pendAcc + Number(r.dumped) - Number(r.accepted) - Number(r.rejected || 0);
    r.pendingDump=pendDump;
    r.pendingAcc=pendAcc;
  });
@@ -145,26 +145,30 @@ function addEntry(){
  const received=+document.getElementById("received").value||0;
  const dumped=+document.getElementById("dumped").value||0;
  const accepted=+document.getElementById("accepted").value||0;
+ const rejected=+document.getElementById("rejected").value||0;
 
  if(!date){alert("Select date");return;}
  if(editIndex>=0){
- data[editIndex]={date,received,dumped,accepted};
+ data[editIndex]={date,received,dumped,accepted,rejected};
  editIndex=-1;
  document.getElementById("saveBtn").innerText="Add Entry";
 }else{
- data.push({date,received,dumped,accepted});
+ data.push({date,received,dumped,accepted,rejected});
 }
- recalc(); save(); render();
+ recalc(); save(); document.getElementById('date').value=new Date().toISOString().split('T')[0];
+render();
 
  document.getElementById("received").value="";
  document.getElementById("dumped").value="";
  document.getElementById("accepted").value="";
+ document.getElementById("rejected").value="";
 }
 
 function del(i){
  if(confirm("Delete entry?")){
    data.splice(i,1);
-   recalc(); save(); render();
+   recalc(); save(); document.getElementById('date').value=new Date().toISOString().split('T')[0];
+render();
  }
 }
 
@@ -176,6 +180,7 @@ function editEntry(i){
  document.getElementById("received").value=r.received;
  document.getElementById("dumped").value=r.dumped;
  document.getElementById("accepted").value=r.accepted;
+ document.getElementById("rejected").value=r.rejected||0;
  document.getElementById("saveBtn").innerText="Update Entry";
  window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -184,13 +189,14 @@ function render(){
  recalc();
  let q=document.getElementById("search").value.toLowerCase();
  let tb="";
- let tr=0,td=0,ta=0,pd=0,pa=0,topen=0;
+ let tr=0,td=0,ta=0,trj=0,pd=0,pa=0,topen=0;
 
  data.forEach((r,i)=>{
    topen += Number(r.openDump||0) + Number(r.openAcc||0);
    tr+=Number(r.received);
    td+=Number(r.dumped);
    ta+=Number(r.accepted);
+   trj+=Number(r.rejected||0);
    pd=r.pendingDump;
    pa=r.pendingAcc;
 
@@ -202,7 +208,7 @@ function render(){
      <td>${(Number(r.openDump||0)+Number(r.openAcc||0))}</td>
      <td style="background:#eaf7ea"><b>${r.received}</b></td><td>${(Number(r.openDump||0)+Number(r.openAcc||0)+Number(r.received||0))}</td>
      <td>${r.dumped}</td>
-     <td style="background:#e8f1ff"><b>${r.accepted}</b></td>
+     <td style="background:#e8f1ff"><b>${r.accepted}</b></td><td>${r.rejected||0}</td>
      <td>${r.pendingDump}</td>
      <td>${r.pendingAcc}</td>
      <td style="background:#fff4cc"><b>${r.pendingDump + r.pendingAcc}</b></td>
@@ -215,6 +221,7 @@ function render(){
  document.getElementById("tRec").innerText=tr;
  document.getElementById("tDump").innerText=td;
  document.getElementById("tAcc").innerText=ta;
+ document.getElementById("tRej").innerText=trj;
  document.getElementById("pDump").innerText=pd;
  document.getElementById("pAcc").innerText=pa;
  
@@ -258,7 +265,7 @@ if(data.length>0){
  "Date : "+dt+"<br>"+
  "OB : "+(last.openAcc||0)+"<br>"+
  "Dumped : "+(last.dumped||0)+"<br>"+
- "Accepted : "+(last.accepted||0)+"<br>"+
+ "Accepted : "+(last.accepted||0)+"<br>"+"Rejected : "+(last.rejected||0)+"<br>"+
  "Balance : "+(last.pendingAcc||0);
 }
 
@@ -298,11 +305,13 @@ function restoreData(e){
  let reader=new FileReader();
  reader.onload=function(){
    data=JSON.parse(reader.result);
-   save(); render();
+   save(); document.getElementById('date').value=new Date().toISOString().split('T')[0];
+render();
  };
  reader.readAsText(file);
 }
 
+document.getElementById('date').value=new Date().toISOString().split('T')[0];
 render();
 </script>
 </body>
