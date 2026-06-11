@@ -136,7 +136,7 @@ Balance : 0
 let data = JSON.parse(localStorage.getItem("godownData")||"[]"); let editIndex=-1; let showAllDates=false;
 
 function save(){
- localStorage.setItem("godownData",JSON.stringify(data));
+ localStorage.setItem("godownData",JSON.stringify(data));\n localStorage.setItem("godownData_backup",JSON.stringify(data));
 }
 
 function recalc(){
@@ -163,7 +163,10 @@ function addEntry(){
  if(editIndex>=0){
  data[editIndex]={date,received,dumped,accepted,rejected};
  editIndex=-1;
+ showAllDates=true;
  document.getElementById("saveBtn").innerText="Add Entry";
+ let btn=document.querySelector("button[onclick='toggleHistory()']");
+ if(btn){btn.innerText="Show Recent Dates";}
 }else{
  data.push({date,received,dumped,accepted,rejected});
 }
