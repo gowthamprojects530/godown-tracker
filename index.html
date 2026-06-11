@@ -136,7 +136,8 @@ Balance : 0
 let data = JSON.parse(localStorage.getItem("godownData")||"[]"); let editIndex=-1; let showAllDates=false;
 
 function save(){
- localStorage.setItem("godownData",JSON.stringify(data));\n localStorage.setItem("godownData_backup",JSON.stringify(data));
+ localStorage.setItem("godownData",JSON.stringify(data));
+ localStorage.setItem("godownData_backup",JSON.stringify(data));
 }
 
 function recalc(){
@@ -199,7 +200,7 @@ document.getElementById('date').value=(()=>{const d=new Date();d.setMinutes(d.ge
 function del(i){
  if(confirm("Delete entry?")){
    data.splice(i,1);
-   recalc(); save(); document.getElementById('date').value=(()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().split('T')[0];})();
+   recalc(); save(); render(); document.getElementById('date').value=(()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().split('T')[0];})();
  }
 }
 
@@ -348,7 +349,7 @@ function restoreData(e){
  let reader=new FileReader();
  reader.onload=function(){
    data=JSON.parse(reader.result);
-   save(); document.getElementById('date').value=(()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().split('T')[0];})();
+   save(); render(); document.getElementById('date').value=(()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().split('T')[0];})();
  };
  reader.readAsText(file);
 }
