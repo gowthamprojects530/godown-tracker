@@ -92,7 +92,7 @@ Balance : 0
 <input type="file" id="restoreFile" onchange="restoreData(event)">
 </div>
 
-<div class="card"><h3>Day Wise Report</h3><button onclick="toggleHistory()">Show All Dates</button><br><br><div style="overflow-x:auto"><table>
+<div class="card"><h3>Day Wise Report</h3><div style="overflow-x:auto"><table>
 <thead>
 <tr>
 <th style="background:#d9ead3">Date</th>
@@ -133,7 +133,7 @@ Balance : 0
 </div>
 
 <script>
-let data = JSON.parse(localStorage.getItem("godownData")||"[]"); let editIndex=-1; let showAllDates=false;
+let data = JSON.parse(localStorage.getItem("godownData")||"[]"); let editIndex=-1;
 
 function save(){
  localStorage.setItem("godownData",JSON.stringify(data));
@@ -164,10 +164,7 @@ function addEntry(){
  if(editIndex>=0){
  data[editIndex]={date,received,dumped,accepted,rejected};
  editIndex=-1;
- showAllDates=true;
  document.getElementById("saveBtn").innerText="Add Entry";
- let btn=document.querySelector("button[onclick='toggleHistory()']");
- if(btn){btn.innerText="Show Recent Dates";}
 }else{
  data.push({date,received,dumped,accepted,rejected});
 }
@@ -190,6 +187,7 @@ render();
 });
 
 document.getElementById('date').value=(()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().split('T')[0];})();
+render();
 
  document.getElementById("received").value="";
  document.getElementById("dumped").value="";
@@ -218,11 +216,7 @@ function editEntry(i){
 }
 
 
-function toggleHistory(){
- showAllDates=!showAllDates;
- document.querySelector("button[onclick='toggleHistory()']").innerText=showAllDates?"Show Recent Dates":"Show All Dates";
- render();
-}
+function toggleHistory(){}
 
 function render(){
  recalc();
@@ -240,11 +234,7 @@ function render(){
    pa=r.pendingAcc;
 
    
-let visible=true;
-if(!showAllDates && data.length>2){
-   visible = (i >= data.length-2);
-}
-if((!q || r.date.toLowerCase().includes(q)) && visible){
+if(!q || r.date.toLowerCase().includes(q)){
      tb+=`<tr>
      <td>${(() => { const d=new Date(r.date); return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear(); })()}</td>
      <td>${r.openDump}</td>
